@@ -37,14 +37,13 @@ export class ProductCatalog {
     this.cardProduct = { ...cardProduct };
   }
 
-  getProductForDisplay(id: string): IProduct {
+  getProductForDisplay(id: string): IProduct { 
     const product = this.arrayProducts.find(item => item.id === id);
-    
-    if (!product) {
+
+    if (!product) { 
       throw new Error(`Товар с ID ${id} не найден`);
     }
 
-    this.cardProduct = { ...product };
-    return { ...product };
+    return product; 
   }
 }

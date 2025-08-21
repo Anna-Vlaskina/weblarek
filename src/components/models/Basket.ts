@@ -17,7 +17,7 @@ export class Basket {
 
   delProduct(id: string): IProduct[] {
     this.arrayProducts = this.arrayProducts.filter(item => item.id !== id);
-    return [...this.arrayProducts];
+    return this.arrayProducts;
   }
   
   clearBasket(): void {
