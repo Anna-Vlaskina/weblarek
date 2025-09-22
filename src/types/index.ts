@@ -22,3 +22,9 @@ export interface IBuyer {
     phone: string;
     address: string;
 }
+
+export interface ICardActions {
+  onClick: (event: MouseEvent) => void;
+}
+
+
