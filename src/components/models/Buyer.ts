@@ -23,8 +23,8 @@ export class Buyer implements IBuyer {
     const oldData = this.getBuyerData();
     
     this.payment = buyerData.payment;
-    this.email = buyerData.email;
-    this.phone = buyerData.phone;
+    this.email = buyerData.email || ''; // гарантируем строку
+    this.phone = buyerData.phone || ''; // гарантируем строку
     this.address = buyerData.address;
 
     // Генерируем событие сохранения данных покупателя

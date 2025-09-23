@@ -3,7 +3,7 @@ import './scss/styles.scss';
 import { IProduct, IProductResponse } from './types/index';
 import { ProductCatalog } from './components/models/ProductCatalog'
 import { Basket } from './components/models/Basket'
-// import { Buyer } from './components/models/Buyer'
+import { Buyer } from './components/models/Buyer'
 import { Api } from './components/base/Api'
 import { ApiComposition } from './components/connection/ApiComposition'
 import { API_URL } from './utils/constants'
@@ -12,11 +12,13 @@ import { cloneTemplate, ensureElement } from './utils/utils';
 import { Header } from './components/view/Header';
 import { Gallery } from './components/view/Gallery';
 import { Modal } from './components/view/Modal';
-// import { OrderSuccess } from './components/view/OrderSuccess';
+import { OrderSuccess } from './components/view/OrderSuccess';
 import { EventEmitter } from './components/base/Events';
 import { CardPreview } from './components/view/CardPreview';
 import { BasketView } from './components/view/BasketView';
 import { CardBasket } from './components/view/CardBasket';
+import { FormOrder } from './components/view/FormOrder';
+import { FormContacts } from './components/view/FormContacts';
 
 const events = new EventEmitter();
 
@@ -29,24 +31,35 @@ events.onAll(({ eventName, data }) => {
 const headerContainer = ensureElement<HTMLElement>('.header');
 const galleryContainer = ensureElement<HTMLElement>('.page__wrapper');
 const modalContainer = ensureElement<HTMLElement>('.modal');
-// const successTemplate = ensureElement<HTMLTemplateElement>('#success');
+const successTemplate = ensureElement<HTMLTemplateElement>('#success');
 const cardCatalogTemplate = ensureElement<HTMLTemplateElement>('#card-catalog');
 const previewTemplate = ensureElement<HTMLTemplateElement>('#card-preview');
 const cardBasketTemplate = ensureElement<HTMLTemplateElement>('#card-basket');
 const basketTemplate = ensureElement<HTMLTemplateElement>('#basket');
-// const orderTemplate = ensureElement<HTMLTemplateElement>('#order');
-// const contactsTemplate = ensureElement<HTMLTemplateElement>('#contacts');
+const orderTemplate = ensureElement<HTMLTemplateElement>('#order');
+const contactsTemplate = ensureElement<HTMLTemplateElement>('#contacts');
+
+
+
 
 
 const gallery = new Gallery(galleryContainer);
 const modal = new Modal(modalContainer, events);
 const basketView = new BasketView(cloneTemplate(basketTemplate), events);
 const basketModel = new Basket([], events);
+const buyerModel = new Buyer({
+  payment: '',
+  email: '',
+  phone: '',
+  address: ''
+}, events);
+const orderForm = new FormOrder(cloneTemplate(orderTemplate), events);
+const contactsForm = new FormContacts(cloneTemplate(contactsTemplate), events);
+const successView = new OrderSuccess(cloneTemplate(successTemplate), events);
 
 
 const productCatalog = new ProductCatalog((await new ApiComposition(new Api(API_URL)).get<IProductResponse>('/product/')).items, events);
 const productsArray = productCatalog.getArrayProducts();
-console.log(productsArray);
 
 // Выводим карточки в галерею 
 
@@ -88,15 +101,7 @@ events.on('modal:close', () => {
 });
 
 
-
 events.emit('catalog:changed');
-
-
-
-
-
-
-
 
 
 
@@ -160,6 +165,10 @@ function updateBasketView() {
 
 
 
+
+
+
+
 // Обработчик изменения каталога - рендер карточек в галерею
 events.on('catalog:changed', () => {
     const itemCards = productsArray.map((item) => {
@@ -170,6 +179,12 @@ events.on('catalog:changed', () => {
     });
     gallery.render({ catalog: itemCards });
 });
+
+
+
+
+
+
 
 // Обработчик выбора карточки - открытие модального окна с превью
 events.on('card:select', (item: IProduct) => {
@@ -240,10 +255,10 @@ events.on('basket:order', () => {
   }
 });
 
-// Обработчики закрытия модальных окон
-events.on('basket:close', () => {
-  modalContainer.classList.remove('modal_active');
-});
+// Обработчики закрытия модальных окон ДУБЛИРОВАНИЕ
+// events.on('basket:close', () => {
+//   modalContainer.classList.remove('modal_active');
+// });
 
 events.on('modal:close', () => {
   modalContainer.classList.remove('modal_active');
@@ -256,14 +271,279 @@ modalContainer.addEventListener('click', (event) => {
   }
 });
 
-// Закрытие по Escape
-document.addEventListener('keydown', (event) => {
-  if (event.key === 'Escape') {
+// // Закрытие по Escape ЭТОГО НЕТ В ТЗ!!!
+// document.addEventListener('keydown', (event) => {
+//   if (event.key === 'Escape') {
+//     events.emit('modal:close');
+//   }
+// });
+
+
+
+
+
+
+
+
+// Обработчик оформления заказа - открытие первой формы
+events.on('basket:order', () => {
+  if (basketModel.getItemsCount() > 0) {
+    events.emit('order:open');
     events.emit('modal:close');
   }
 });
+
+// Обработчик открытия формы заказа
+events.on('order:open', () => {
+  // Восстанавливаем сохраненные данные покупателя
+  const buyerData = buyerModel.getBuyerData();
+  
+  // Устанавливаем данные в форму через сеттеры
+  orderForm.payment = buyerData.payment;
+  orderForm.address = buyerData.address;
+  
+  const orderElement = orderForm.render();
+  modal.content = orderElement;
+  modalContainer.classList.add('modal_active');
+  
+  validateOrderForm();
+});
+
+// Обработчик изменения способа оплаты
+events.on('order:payment:change', (data: { payment: 'card' | 'cash' }) => {
+  // Сохраняем в модель покупателя
+  const currentData = buyerModel.getBuyerData();
+  buyerModel.saveOrderData({
+    ...currentData,
+    payment: data.payment
+  });
+  
+  // Обновляем UI через сеттер
+  orderForm.payment = data.payment;
+  
+  validateOrderForm();
+});
+
+// Обработчик изменения адреса
+events.on('order:address:change', (data: { address: string }) => {
+  // Сохраняем в модель покупателя
+  const currentData = buyerModel.getBuyerData();
+  buyerModel.saveOrderData({
+    ...currentData,
+    address: data.address
+  });
+  
+  validateOrderForm();
+});
+
+// // Валидация формы заказа
+// function validateOrderForm() {
+//   const isValid = buyerModel.validationData();
+//   const buyerData = buyerModel.getBuyerData();
+  
+//   const errors: string[] = [];
+//   if (!buyerData.payment) errors.push('Выберите способ оплаты');
+//   if (!buyerData.address.trim()) errors.push('Введите адрес доставки');
+  
+//   orderForm.errors = errors.join('; ');
+//   orderForm.valid = isValid;
+// }
+
+
+//  Валидация формы заказа
+function validateOrderForm() {
+  const buyerData = buyerModel.getBuyerData();
+  
+  const isValid = !!buyerData.payment && 
+                 !!buyerData.address && 
+                 buyerData.address.trim() !== '';
+  
+  // Устанавливаем состояние кнопки через сеттер
+  orderForm.valid = isValid;
+  
+  // Обрабатываем ошибки
+  const errors: string[] = [];
+  if (!buyerData.payment) errors.push('Выберите способ оплаты');
+  if (!buyerData.address || buyerData.address.trim() === '') errors.push('Введите адрес доставки');
+  orderForm.errors = errors.join('; ');
+}
+
+
+
+
+
+
+
+
+
+
+
+
+// Обработчик отправки формы заказа (переход ко второму этапу)
+events.on('form:submit', () => {
+  if (buyerModel.validationData()) {
+    events.emit('contacts:open');
+  } else {
+    console.log('Данные невалидны, форма не отправляется');
+    validateOrderForm(); // Перевалидируем чтобы показать ошибки
+  }
+});
+
+// Обработчик открытия формы контактов (второй этап)
+events.on('contacts:open', () => {
+  // Восстанавливаем сохраненные данные покупателя
+  const buyerData = buyerModel.getBuyerData();
+  
+  // Устанавливаем данные в форму
+  contactsForm.email = buyerData.email;
+  contactsForm.phone = buyerData.phone;
+  
+  const contactsElement = contactsForm.render();
+  modal.content = contactsElement;
+  
+  // Валидируем форму
+  validateContactsForm();
+});
+
+// Обработчик изменения ввода в форме контактов
+events.on('contacts:input:change', (data: { email?: string; phone?: string }) => {
+  // Сохраняем в модель покупателя
+  const currentData = buyerModel.getBuyerData();
+  buyerModel.saveOrderData({
+    ...currentData,
+    ...data
+  });
+  
+  validateContactsForm();
+});
+
+
+//  Валидация формы заказа
+function validateContactsForm() {
+  const buyerData = buyerModel.getBuyerData();
+  
+  const isValid = buyerData.email.trim() !== '' && 
+                 buyerData.phone.trim() !== '';
+  
+  
+  
+  // Обрабатываем ошибки
+  const errors: string[] = [];
+  if (buyerData.email.trim() === '') errors.push('Введите email');
+  if (buyerData.phone.trim() === '') errors.push('Введите телефон');
+  
+  // Устанавливаем состояние кнопки и ошибки
+  contactsForm.valid = isValid;
+  contactsForm.errors = errors.join('; ');
+}
+
+
+
+
+
+// Обработчик отправки формы контактов (завершение заказа)
+events.on('form:submit', async () => {
+  if (buyerModel.validationData()) {
+    try {
+      const buyerData = buyerModel.getBuyerData();
+      
+      // Формируем данные для отправки
+      const orderPayload = {
+        payment: buyerData.payment,
+        address: buyerData.address,
+        email: buyerData.email,
+        phone: buyerData.phone,
+        items: basketModel.getArrayBasket().map(item => item.id),
+        total: basketModel.getTotalPrice()
+      };
+      
+      // Отправляем заказ на сервер
+      const api = new ApiComposition(new Api(API_URL));
+      const response = await api.post('/order', orderPayload);
+      
+      // Показываем успешное сообщение
+      events.emit('order:success', response);
+      
+    } catch (error) {
+      console.error('Ошибка при оформлении заказа:', error);
+      contactsForm.errors = 'Произошла ошибка при оформлении заказа. Попробуйте еще раз.';
+    }
+  }
+});
+
+// // Обработчик успешного оформления заказа
+// events.on('order:success', (response: any) => {
+//   // Очищаем корзину
+//   basketModel.clearBasket();
+  
+//   // Очищаем данные покупателя
+//   buyerModel.clearBuyerData();
+  
+//   /// Устанавливаем сумму заказа через сеттер
+//   const total = response?.total || 0;
+//   successView.price = `Списано ${total} синапсов`;
+
+//   // Открываем модальное окно с подтверждением
+//   events.emit('success:open', { total });
+  
+//   // // Рендерим компонент (без параметров)
+//   // const successElement = successView.render();
+//   // modal.content = successElement;
+// });
+
+
+// Обработчик успешного оформления заказа
+events.on('order:success', (response: any) => {
+  console.log('Заказ успешно оформлен:', response);
+  
+  // Очищаем корзину
+  basketModel.clearBasket();
+  
+  // Очищаем данные покупателя
+  buyerModel.clearBuyerData();
+  
+  // Открываем модальное окно с подтверждением
+  events.emit('success:open', { 
+    total: response?.total || 0 
+  });
+});
+
+
+
+// Обработчик открытия модального окна успешного заказа
+events.on('success:open', (data: { total: number }) => {
+  
+  // Устанавливаем цену через сеттер
+  successView.price = `Списано ${data.total} синапсов`;
+  
+  // Рендерим компонент
+  const successElement = successView.render();
+  
+  // Устанавливаем содержимое модального окна
+  modal.content = successElement;
+  modalContainer.classList.add('modal_active');
+});
+
+
+
+
+// Обработчик закрытия успешного сообщения
+events.on('success:close', () => {
+  events.emit('modal:close');
+});
+
+events.on('modal:close', () => {
+  modalContainer.classList.remove('modal_active');
+});
+
+
+
+
+
+
 
 // Инициализация при загрузке
 updateBasketCounter();
 updateBasketView();
 events.emit('catalog:changed');
+
