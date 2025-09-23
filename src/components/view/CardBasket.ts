@@ -22,6 +22,7 @@ export class CardBasket extends Card<TCardBasket> {
   }
 
   set index(value: number) {
-    this.indexElement.textContent = String(value);
+    this.setText(this.indexElement, String(value));
   }
 }
+

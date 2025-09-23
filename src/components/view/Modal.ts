@@ -21,19 +21,19 @@ export class Modal extends Component<IModal> {
       this.events?.emit('modal:close');
     });
 
-    // Дополнительно: закрытие по клику на оверлей
-    this.container.addEventListener('click', (event) => {
-      if (event.target === this.container) {
-        this.events?.emit('modal:close');
-      }
-    });
+    // // Дополнительно: закрытие по клику на оверлей
+    // this.container.addEventListener('click', (event) => {
+    //   if (event.target === this.container) {
+    //     this.events?.emit('modal:close');
+    //   }
+    // });
 
-    // Закрытие по клавише Escape
-    document.addEventListener('keydown', (event) => {
-      if (event.key === 'Escape') {
-        this.events?.emit('modal:close');
-      }
-    });
+    // // Закрытие по клавише Escape
+    // document.addEventListener('keydown', (event) => {
+    //   if (event.key === 'Escape') {
+    //     this.events?.emit('modal:close');
+    //   }
+    // });
   }
 
   set content(element: HTMLElement) {

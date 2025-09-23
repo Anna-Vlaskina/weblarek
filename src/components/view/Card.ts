@@ -19,7 +19,10 @@ export abstract class Card<T extends TCard = TCard> extends Component<T> {
     this.setText(this.titleElement, value);
   }
 
-  set price(value: number) {
+  set price(value: number | null) {
     this.priceElement.textContent = String(value);
+    if (value === null) {
+      this.priceElement.textContent = String('Бесценно');
+    }
   }
 }

@@ -27,4 +27,8 @@ export interface ICardActions {
   onClick: (event: MouseEvent) => void;
 }
 
+export interface IProductResponse {
+  items: IProduct[];
+}
+
 
