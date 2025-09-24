@@ -30,5 +30,3 @@ export interface ICardActions {
 export interface IProductResponse {
   items: IProduct[];
 }
-
-

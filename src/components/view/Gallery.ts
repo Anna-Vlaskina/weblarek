@@ -13,13 +13,6 @@ export class Gallery extends Component<IGallery> {
     super(container);
 
     this.catalogElement = ensureElement<HTMLElement>('.gallery', this.container);
-
-    this.container.addEventListener('click', (event) => {
-      const target = event.target as HTMLElement;
-      if (target.closest('.gallery__item') || target.closest('.gallery')) {
-        this.events?.emit('gallery:open');
-      }
-    });
   }
 
   set catalog(items: HTMLElement[]) {

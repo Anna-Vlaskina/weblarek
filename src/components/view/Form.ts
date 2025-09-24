@@ -11,47 +11,23 @@ export abstract class Form<T extends TForm> extends Component<T> {
   protected submitElement: HTMLButtonElement;
   protected errorsElement: HTMLElement;
   
-  constructor(container: HTMLFormElement, protected events: IEvents) {
+  constructor(container: HTMLElement, protected events: IEvents) {
     super(container);
     
     this.submitElement = ensureElement<HTMLButtonElement>('button[type=submit]', this.container);
     this.errorsElement = ensureElement<HTMLElement>('.form__errors', this.container);
 
-    this.container.addEventListener('submit', (e: Event) => {
-      e.preventDefault();
-      this.events.emit('form:submit');
-    });
-
-
-
-    // Дополнительный обработчик нажатия на кнопку
-    this.submitElement.addEventListener('click', (event) => {
+    this.container.addEventListener('submit', (event) => {
       event.preventDefault();
-        this.events.emit('contacts:open');
+      this.events.emit(`${this.container.getAttribute('name')}:form:submit`);
     });
   }
-
-
-  
 
   set errors(value: string) {
     this.setText(this.errorsElement, value);
   }
 
-
-  // // Сеттер для валидности формы
-  // set valid(value: boolean) {
-  //   this.submitElement.disabled = !value;
-  // }
-
-  set valid(value: boolean) {
-    if (value) {
-      // Убираем disabled - кнопка активна
-      this.submitElement.removeAttribute('disabled');
-    } else {
-      // Добавляем disabled - кнопка неактивна
-      this.submitElement.setAttribute('disabled', 'disabled');
-    }
+  set valid(isValid: boolean) {
+    this.submitElement.disabled = !isValid;
   }
-
 }

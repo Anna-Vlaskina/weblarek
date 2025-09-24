@@ -25,4 +25,3 @@ export class CardBasket extends Card<TCardBasket> {
     this.setText(this.indexElement, String(value));
   }
 }
-
