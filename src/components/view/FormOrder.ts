@@ -19,10 +19,10 @@ export class FormOrder extends Form<TFormOrder> {
     this.titleLabelElement = ensureElement<HTMLSpanElement>('.form__label', this.container);
     this.inputElement = ensureElement<HTMLInputElement>('.form__input', this.container);
 
-      this.buttonsForm.forEach((button) => {
-      button.addEventListener('click', (event) => {
-        event.preventDefault();
-        this.events?.emit('order:payment:change', { 
+    this.buttonsForm.forEach((button) => {
+    button.addEventListener('click', (event) => {
+      event.preventDefault();
+      this.events?.emit('order:payment:change', { 
           payment: button.name as 'card' | 'cash' 
         });
       });
