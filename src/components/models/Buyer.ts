@@ -56,8 +56,14 @@ export class Buyer implements IBuyer {
     });
   }
 
-  validateOrder(): boolean {
-    const isValid = !!(this.payment && this.address.trim());
+   validateOrder(): { isValid: boolean; errors: string[] } {
+    const errors: string[] = [];
+    
+    if (!this.payment) errors.push('Выберите способ оплаты');
+    if (!this.address?.trim()) errors.push('Введите адрес доставки');
+    
+    const isValid = errors.length === 0;
+    
     this.events.emit('buyer:validation:checked:order', {
       isValid,
       buyerData: this.getBuyerData(),
@@ -66,11 +72,18 @@ export class Buyer implements IBuyer {
         hasAddress: !!this.address.trim()
       }
     });
-    return isValid;
+    
+    return { isValid, errors };
   }
 
-  validateContacts(): boolean {
-    const isValid = !!(this.email.trim() && this.phone.trim());
+   validateContacts(): { isValid: boolean; errors: string[] } {
+    const errors: string[] = [];
+    
+    if (!this.email?.trim()) errors.push('Введите email');
+    if (!this.phone?.trim()) errors.push('Введите телефон');
+    
+    const isValid = errors.length === 0;
+    
     this.events.emit('buyer:validation:checked:contacts', {
       isValid,
       buyerData: this.getBuyerData(),
@@ -79,7 +92,8 @@ export class Buyer implements IBuyer {
         hasPhone: !!this.phone.trim()
       }
     });
-    return isValid;
+    
+    return { isValid, errors };
   }
 
   private getChangedFields(oldData: IBuyer, newData: IBuyer): string[] {

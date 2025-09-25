@@ -60,13 +60,12 @@ const orderForm = new FormOrder(cloneTemplate(templates.order), events);
 const contactsForm = new FormContacts(cloneTemplate(templates.contacts), events);
 const successView = new OrderSuccess(cloneTemplate(templates.success), events);
 
-let productCatalog: ProductCatalog;
+let productCatalog: ProductCatalog = new ProductCatalog([], events); 
 
 // Инициализация каталога товаров
 (async function initCatalog() {
     const apiResponse = await new ApiComposition(new Api(API_URL)).get<IProductResponse>('/product/');
-    productCatalog = new ProductCatalog(apiResponse.items, events);
-    events.emit('catalog:changed');
+    productCatalog.setArrayProducts(apiResponse.items);
 })();
 
 // Обновление UI состояния
@@ -85,51 +84,22 @@ function updateBasketView() {
     const basketProducts = basketModel.getArrayBasket();
     const totalPrice = basketModel.getTotalPrice() || 0;
     
-    basketView.prise = `${totalPrice} синапсов`;
+    basketView.price = totalPrice;
     
-    if (basketView.basketButton) {
-        basketView.basketButton.disabled = basketProducts.length === 0;
-    }
-    
-    if (basketProducts.length === 0) {
-        basketView.products = [];
-        const emptyMessage = document.createElement('div');
-        emptyMessage.className = 'basket__empty';
-        emptyMessage.textContent = 'Корзина пуста';
-        basketView.productsElement.innerHTML = '';
-        basketView.productsElement.appendChild(emptyMessage);
-    } else {
-        const basketItems = basketProducts.map((item, index) => {
-            const basketCard = new CardBasket(cloneTemplate(templates.cardBasket), {
-                onClick: () => events.emit('basket:item:delete', item)
-            });
-            return basketCard.render({...item, index: index + 1});
+    const basketItems = basketProducts.map((item, index) => {
+        const basketCard = new CardBasket(cloneTemplate(templates.cardBasket), {
+            onClick: () => events.emit('basket:item:delete', item)
         });
-        basketView.products = basketItems;
-    }
-}
-
-// Обновление кнопки в превью товара
-function updatePreviewButton(item: IProduct, button: HTMLButtonElement) {
-    const isInBasket = basketModel.hasProduct(item.id);
-    const hasPrice = item.price !== null && item.price !== undefined && item.price > 0;
-
-    if (!hasPrice) {
-        button.textContent = 'Недоступно';
-        button.disabled = true;
-    } else if (isInBasket) {
-        button.textContent = 'Удалить из корзины';
-        button.disabled = false;
-    } else {
-        button.textContent = 'Купить';
-        button.disabled = false;
-    }
+        return basketCard.render({...item, index: index + 1});
+    });
+    
+    basketView.products = basketItems;
 }
 
 // Обработчики событий представления
 
 // Каталог товаров
-events.on('catalog:changed', () => {
+events.on('products:changed', () => {
     if (!productCatalog) return;
     
     const productsArray = productCatalog.getArrayProducts();
@@ -151,14 +121,8 @@ events.on('card:click', (item: IProduct) => {
     });
     
     const cardElement = previewCard.render(item);
-    const button = cardElement.querySelector('.card__button') as HTMLButtonElement;
-    
-    if (button) {
-        updatePreviewButton(item, button);
-    }
-    
-    modal.content = cardElement;
-    templates.modalContainer.classList.add('modal_active');
+
+    modal.openWithContent(cardElement);
 });
 
 // Клик по кнопке в превью товара (добавить/удалить из корзины)
@@ -183,22 +147,17 @@ events.on('basket:cleared', updateUI);
 
 // Открытие корзины (из хедера)
 events.on('basket:open', () => {
-    modal.content = basketView.render();
-    updateBasketView();
-    templates.modalContainer.classList.add('modal_active');
+    modal.openWithContent(basketView.render());
 });
 
 // Оформление заказа (из корзины)
 events.on('order:open', () => {
-    if (basketModel.getItemsCount() > 0) {
+     if (basketModel.getItemsCount() > 0) {
         const buyerData = buyerModel.getBuyerData();
         orderForm.payment = buyerData.payment;
         orderForm.address = buyerData.address;
         
-        const orderElement = orderForm.render();
-        modal.content = orderElement;
-        templates.modalContainer.classList.add('modal_active');
-        validateOrderForm();
+        modal.openWithContent(orderForm.render());
     }
 });
 
@@ -289,11 +248,11 @@ events.on('order:success', (response: any) => {
 
 // Закрытие модальных окон
 events.on('success:close', () => {
-    events.emit('modal:close');
+    modal.close();
 });
 
 events.on('modal:close', () => {
-    templates.modalContainer.classList.remove('modal_active');
+     modal.close();
 });
 
 // Закрытие по клику вне модального окна
@@ -305,30 +264,18 @@ templates.modalContainer.addEventListener('click', (event) => {
 
 // Валидация формы заказа
 function validateOrderForm(): boolean {
-    const isValid = buyerModel.validateOrder();
-    orderForm.valid = isValid;
-
-    const buyerData = buyerModel.getBuyerData();
-    const errors: string[] = [];
-    if (!buyerData.payment) errors.push('Выберите способ оплаты');
-    if (!buyerData.address?.trim()) errors.push('Введите адрес доставки');
-    orderForm.errors = errors.join('; ');
-
-    return isValid;
+    const validationResult = buyerModel.validateOrder();
+    orderForm.valid = validationResult.isValid;
+    orderForm.errors = validationResult.errors.join('; ');
+    return validationResult.isValid;
 }
 
 // Валидация формы контактов
 function validateContactsForm(): boolean {
-    const isValid = buyerModel.validateContacts();
-    contactsForm.valid = isValid;
-
-    const buyerData = buyerModel.getBuyerData();
-    const errors: string[] = [];
-    if (!buyerData.email?.trim()) errors.push('Введите email');
-    if (!buyerData.phone?.trim()) errors.push('Введите телефон');
-    contactsForm.errors = errors.join('; ');
-
-    return isValid;
+    const validationResult = buyerModel.validateContacts();
+    contactsForm.valid = validationResult.isValid;
+    contactsForm.errors = validationResult.errors.join('; ');
+    return validationResult.isValid;
 }
 
 // Инициализация

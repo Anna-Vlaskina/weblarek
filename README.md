@@ -208,12 +208,12 @@ Presenter - презентер содержит основную логику п
 `protected titleElement: HTMLElement` - элемент заголовка модального окна корзины.
 `productsElement: HTMLElement` - контейнер для списка товаров в корзине.
 `basketButton: HTMLButtonElement - кнопка оформления заказа.
-`protected priseElement: HTMLElement` - элемент отображения общей стоимости товаров.
+`protected priceElement: HTMLElement` - элемент отображения общей стоимости товаров.
 `protected events: EventEmitter` - обработчик событий для коммуникации с другими компонентами.
 
 Методы класса:
 `set products(items: HTMLElement[])` - установка списка товаров в корзине (очищает текущий список и добавляет новые элементы).
-`set prise(value: string)` - установка общей стоимости товаров в корзине.
+`set price(value: string)` - установка общей стоимости товаров в корзине.
 
 #### Класс Card
 Абстрактный базовый класс карточки товара. Определяет общую структуру и поведение для всех типов карточек товаров.
@@ -296,7 +296,7 @@ Presenter - презентер содержит основную логику п
 
 Поля класса:
 `protected titleLabelElement: HTMLSpanElement[]` - массив элементов заголовков полей формы.
-`protected inputElement: HTMLInputElement[]` - массив элементов ввода данных формы.
+`protected inputElements: HTMLInputElement[]` - массив элементов ввода данных формы.
 `protected events: IEvents` - обработчик событий для коммуникации с другими компонентами.
 
 Методы класса:

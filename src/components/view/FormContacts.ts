@@ -7,16 +7,16 @@ type TFormContacts = TForm & Pick<IBuyer, 'email' | 'phone'>;
 
 export class FormContacts extends Form<TFormContacts> {
   protected titleLabelElement: HTMLSpanElement[];
-  protected inputElement: HTMLInputElement[];
+  protected inputElements: HTMLInputElement[];
 
   constructor(container: HTMLElement, protected events: IEvents) {
     super(container, events);
 
     this.titleLabelElement = ensureAllElements<HTMLSpanElement>('.form__label', this.container);
-    this.inputElement = ensureAllElements<HTMLInputElement>('.form__input', this.container);
+    this.inputElements = ensureAllElements<HTMLInputElement>('.form__input', this.container);
 
     
-    this.inputElement.forEach((input) => {
+    this.inputElements.forEach((input) => {
       input.addEventListener('input', (event) => {
         event.preventDefault();
         console.log('Input change:', input.name, input.value);
@@ -32,12 +32,12 @@ export class FormContacts extends Form<TFormContacts> {
   }
 
   set email(value: string) {
-    const emailInput = this.inputElement.find(input => input.name === 'email');
+    const emailInput = this.inputElements.find(input => input.name === 'email');
     if (emailInput) emailInput.value = value;
   }
 
   set phone(value: string) {
-    const phoneInput = this.inputElement.find(input => input.name === 'phone');
+    const phoneInput = this.inputElements.find(input => input.name === 'phone');
     if (phoneInput) phoneInput.value = value;
   }
 }
