@@ -19,10 +19,10 @@ export class FormOrder extends Form<TFormOrder> {
     this.titleLabelElement = ensureElement<HTMLSpanElement>('.form__label', this.container);
     this.inputElement = ensureElement<HTMLInputElement>('.form__input', this.container);
 
-      this.buttonsForm.forEach((button) => {
-      button.addEventListener('click', (event) => {
-        event.preventDefault();
-        this.events?.emit('order:payment:change', { 
+    this.buttonsForm.forEach((button) => {
+    button.addEventListener('click', (event) => {
+      event.preventDefault();
+      this.events?.emit('order:payment:change', { 
           payment: button.name as 'card' | 'cash' 
         });
       });
@@ -38,11 +38,7 @@ export class FormOrder extends Form<TFormOrder> {
 
  set payment(value: 'card' | 'cash' | '') {
     this.buttonsForm.forEach(button => {
-      if (button.name === value) {
-        button.classList.add('button_alt-active');
-      } else {
-        button.classList.remove('button_alt-active');
-      }
+      button.classList.toggle('button_alt-active', button.name === value);
     });
   }
 

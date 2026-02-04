@@ -42,4 +42,17 @@ export class CardPreview extends Card<TCardPreview> {
   set description(value: string) {
     this.setText(this.descriptionElement, value)
   }
+
+  updateButtonState(isInBasket: boolean, hasPrice: boolean) {
+    if (!hasPrice) {
+      this.buttonElement.textContent = 'Недоступно';
+      this.buttonElement.disabled = true;
+    } else if (isInBasket) {
+      this.buttonElement.textContent = 'Удалить из корзины';
+      this.buttonElement.disabled = false;
+    } else {
+      this.buttonElement.textContent = 'Купить';
+      this.buttonElement.disabled = false;
+    }
+  }
 }
