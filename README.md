@@ -1,3 +1,5 @@
+https://anna-vlaskina.github.io/weblarek/
+
 # Проектная работа "Веб-ларек"
 
 Стек: HTML, SCSS, TS, Webpack
