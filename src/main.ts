@@ -64,7 +64,7 @@ let productCatalog: ProductCatalog = new ProductCatalog([], events);
 
 // Инициализация каталога товаров
 (async function initCatalog() {
-    const apiResponse = await new ApiComposition(new Api(API_URL)).get<IProductResponse>('/product/');
+    const apiResponse = await new ApiComposition(new Api(API_URL)).get<IProductResponse>('products.json');
     productCatalog.setArrayProducts(apiResponse.items);
 })();
 
